@@ -1,4 +1,4 @@
-import { Component, Profiler, type ComponentType, type ErrorInfo, type ReactNode } from 'react'
+import { Component, memo, Profiler, type ComponentType, type ErrorInfo, type ReactNode } from 'react'
 
 /** Traduit les erreurs React les plus fréquentes en conseils compréhensibles par un débutant. */
 export function explainRuntimeError(message: string): string {
@@ -53,7 +53,11 @@ interface Props {
 }
 
 /** Affiche le composant du joueur, isolé dans une ErrorBoundary et mesuré par un Profiler. */
-export function UserRuntime({ Component: UserComponent, runKey, onError, onRender }: Props) {
+/**
+ * Mémoïsé : le composant du joueur ne se ré-affiche pas quand l'interface autour change
+ * (frappe dans l'éditeur, objectifs…). Indispensable pour que `renderCount` reflète son code.
+ */
+export const UserRuntime = memo(function UserRuntime({ Component: UserComponent, runKey, onError, onRender }: Props) {
   if (!UserComponent) return <div className="user-empty">Ton composant apparaîtra ici dès que ton code compile.</div>
   return (
     <UserErrorBoundary key={runKey} onError={onError}>
@@ -62,4 +66,4 @@ export function UserRuntime({ Component: UserComponent, runKey, onError, onRende
       </Profiler>
     </UserErrorBoundary>
   )
-}
+})

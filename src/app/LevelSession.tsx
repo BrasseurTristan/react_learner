@@ -114,6 +114,18 @@ export function LevelSession({ level, progress, onProgress, hasNext, onNext }: P
     evaluate()
   }, [code, diagnostics, evaluate])
 
+  // Callbacks stables : UserRuntime est mémoïsé et ne doit pas se ré-afficher à chaque rendu de la session.
+  const onUserError = useCallback(
+    (m: string) => {
+      setRuntimeError(m)
+      engine.log('error', `Ton composant a planté : ${m}`)
+    },
+    [engine],
+  )
+  const onUserRender = useCallback(() => {
+    renderCount.current++
+  }, [])
+
   // ── Actions ──
   const start = () => {
     setOverlay(null)
@@ -277,17 +289,7 @@ export function LevelSession({ level, progress, onProgress, hasNext, onNext }: P
               <small>ce que renvoie ton JSX (hors tours)</small>
             </div>
             <div className="user-surface">
-              <UserRuntime
-                Component={compiled.Component}
-                runKey={compiled.runKey}
-                onError={(m) => {
-                  setRuntimeError(m)
-                  engine.log('error', `Ton composant a planté : ${m}`)
-                }}
-                onRender={() => {
-                  renderCount.current++
-                }}
-              />
+              <UserRuntime Component={compiled.Component} runKey={compiled.runKey} onError={onUserError} onRender={onUserRender} />
             </div>
           </div>
           <div className="side card">
