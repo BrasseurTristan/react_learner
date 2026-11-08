@@ -24,15 +24,21 @@ n'affiches même pas !
 ## \`useRef\` : une boîte qui survit aux rendus
 
 \`useRef(valeurInitiale)\` te donne un objet \`{ current: … }\`. React te rend **le même
-objet** à chaque rendu, et tu peux modifier \`current\` librement :
+objet** à chaque rendu, et tu peux modifier \`current\` comme tu veux… en dehors du rendu :
 
 \`\`\`tsx
 import { useRef } from 'react'
 
-const spawnCount = useRef(0)
+export default function Defense() {
+  const clicks = useRef(0) // { current: 0 }, le même objet à chaque rendu
 
-spawnCount.current++          // ✅ modifie la valeur…
-console.log(spawnCount.current) // … qui est conservée d'un rendu à l'autre
+  function handleClick() {
+    clicks.current++     // ✅ modifie la valeur dans un gestionnaire…
+    log(clicks.current)  // … elle est conservée d'un clic à l'autre
+  }
+
+  return <button onClick={handleClick}>Compter</button>
+}
 \`\`\`
 
 Modifier \`.current\` **ne déclenche aucun rendu**. C'est exactement ce qu'il faut pour
@@ -47,12 +53,13 @@ une valeur « de coulisses » : un compteur, un drapeau, un identifiant de minut
 | Comment la modifier | \`setX(nouvelle)\` | \`ref.current = nouvelle\` |
 | À utiliser pour… | ce qui s'**affiche** à l'écran | ce qui sert **en coulisses** |
 
-> ⚠️ Comme un ref ne redessine rien, n'affiche pas \`ref.current\` dans ton JSX en espérant
-> le voir se mettre à jour : l'écran ne bougera pas !
+> ⚠️ Règle d'or : **ne lis ni ne modifie \`ref.current\` pendant le rendu** (dans le corps du
+> composant ou dans le JSX). Fais-le dans un **gestionnaire d'événement** ou un **effet**.
+> Et comme une ref ne redessine rien, l'afficher dans ton JSX ne montrerait jamais la valeur à jour.
 
 ## Le cas typique : un gestionnaire d'événement
 
-Un abonnement créé dans \`useEffect(…, [])\` vit pendant toute la partie. Avec un ref,
+Un abonnement créé dans \`useEffect(…, [])\` vit pendant toute la partie. Avec une ref,
 le gestionnaire lit et modifie toujours **la valeur à jour** :
 
 \`\`\`tsx
@@ -74,7 +81,7 @@ useEffect(() => {
 }, [])
 \`\`\`
 
-## Bonus : un ref vers un élément HTML
+## Bonus : une ref vers un élément HTML
 
 \`useRef\` sert aussi à « attraper » un élément du DOM, par exemple pour lui donner le focus :
 
@@ -89,7 +96,7 @@ const inputRef = useRef<HTMLInputElement>(null)
 > copies du composant et ne serait jamais remise à zéro quand il est remonté.
 > \`useRef\` appartient à **ton** composant, c'est la bonne boîte.
 `,
-  mission: `Hordes et golems blindés déferlent dans le canyon. Tes deux sorts sont indispensables, mais **chaque lancer raté est interdit** !
+  mission: `Hordes et golems blindés déferlent dans le canyon. Tes deux sorts sont indispensables, mais **aucun sort ne doit être lancé pendant sa recharge** !
 Avec des **refs** (et un \`useEffect\` qui s'abonne aux événements) :
 - au **10e ennemi apparu** de chaque vague, lance \`castSpell('meteor')\` : toute la horde est alors sur le chemin ;
 - au **premier golem** (\`tank\`) de chaque vague, lance \`castSpell('freeze')\`… **une seule fois** par vague ;
@@ -101,9 +108,9 @@ import { Tower, castSpell, onGameEvent } from 'game'
 
 export default function Defense() {
   // ❌ Un état provoque un rendu à CHAQUE apparition d'ennemi…
-  // TODO : remplace-le par un ref : const spawnCount = useRef(0)
+  // TODO : remplace-le par une ref : const spawnCount = useRef(0)
   const [spawnCount, setSpawnCount] = useState(0)
-  // TODO : ajoute un second ref (un booléen) pour savoir si le gel a déjà été lancé cette vague
+  // TODO : ajoute une seconde ref (un booléen) pour savoir si le gel a déjà été lancé cette vague
 
   useEffect(() => {
     const offSpawn = onGameEvent('enemySpawn', ({ enemy }) => {
