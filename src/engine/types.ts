@@ -104,7 +104,6 @@ export interface EnemyState {
   flying: boolean
   armored: boolean
   slowUntil: number
-  burnUntil: number
   reward: number
 }
 
