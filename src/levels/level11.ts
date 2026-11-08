@@ -40,17 +40,21 @@ type Theme = 'clair' | 'sombre'
 const ThemeContext = createContext<Theme>('clair')
 \`\`\`
 
-**2. Fournir une valeur** avec le **Provider**, autour de la partie de l'arbre concernée :
+**2. Fournir une valeur** en enveloppant la partie de l'arbre concernée dans le contexte
+lui-même, utilisé comme un composant (on l'appelle alors le **Provider**, « fournisseur ») :
 
 \`\`\`tsx
 const [theme, setTheme] = useState<Theme>('sombre')
 
 return (
-  <ThemeContext.Provider value={theme}>
+  <ThemeContext value={theme}>
     <Page />
-  </ThemeContext.Provider>
+  </ThemeContext>
 )
 \`\`\`
+
+> 📜 Avant React 19, on écrivait \`<ThemeContext.Provider value={theme}>…</ThemeContext.Provider>\`.
+> Cette forme historique fonctionne toujours et tu la croiseras souvent dans du code existant.
 
 **3. Lire la valeur** où tu veux en dessous, avec le hook \`useContext\` :
 
@@ -141,7 +145,7 @@ function Fortress() {
 export default function Defense() {
   const [element, setElement] = useState<MagicElement>('ice')
 
-  // TODO 2 : enveloppe la forteresse dans le Provider de ton contexte (value={element})
+  // TODO 2 : enveloppe la forteresse dans ton contexte : <ElementContext value={element}>…</ElementContext>
   return (
     <>
       <p>Élément actif : {LABELS[element]}</p>
@@ -202,7 +206,7 @@ export default function Defense() {
   const [element, setElement] = useState<MagicElement>('ice')
 
   return (
-    <ElementContext.Provider value={element}>
+    <ElementContext value={element}>
       <p>Élément actif : {LABELS[element]}</p>
       {(Object.keys(LABELS) as MagicElement[]).map((e) => (
         <button key={e} disabled={e === element} onClick={() => setElement(e)}>
@@ -210,13 +214,13 @@ export default function Defense() {
         </button>
       ))}
       <Fortress />
-    </ElementContext.Provider>
+    </ElementContext>
   )
 }
 `,
   hints: [
     'Trois pièces à assembler : `createContext` (hors des composants), le Provider autour de `<Fortress />`, et `useContext` dans `ElementalTower`. Pense à les importer depuis `react`.',
-    'Crée `const ElementContext = createContext<MagicElement>(\'ice\')`, puis dans `Defense` renvoie `<ElementContext.Provider value={element}>…</ElementContext.Provider>`.',
+    'Crée `const ElementContext = createContext<MagicElement>(\'ice\')`, puis dans `Defense` renvoie `<ElementContext value={element}>…</ElementContext>` (ou la forme historique `<ElementContext.Provider value={element}>`).',
     'Dans `ElementalTower` : `const element = useContext(ElementContext)` puis `<Tower slot={slot} kind={kind} element={element} />`. En jeu : **Glace** contre les éclaireurs, **Feu** contre les gobelins, **Tempête** contre golems et chauves-souris.',
   ],
   objectives: [
