@@ -1,4 +1,4 @@
-import { Canvas } from '@react-three/fiber'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { Bloom, EffectComposer, SMAA, Vignette } from '@react-three/postprocessing'
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import * as THREE from 'three'
@@ -7,6 +7,7 @@ import type { EnemyKind, TowerState } from '../engine/types'
 import { Ambience } from './scene/Ambience'
 import { CameraRig } from './scene/CameraRig'
 import { FxLayer } from './scene/FxLayer'
+import { createFxBus, type FxBus } from './scene/particles'
 import { Terrain } from './scene/Terrain'
 import { EnemyModel, TowerModel } from './scene/Units'
 
@@ -63,7 +64,26 @@ function useTowerPresence(engine: GameEngine, sig: string): RenderedTower[] {
   return out
 }
 
+/** Tremblement de l'univers (et non de la caméra, pour ne pas gêner OrbitControls). */
+function ShakeGroup({ fx, children }: { fx: FxBus; children: React.ReactNode }) {
+  const ref = useRef<THREE.Group>(null)
+  const reduced = useMemo(() => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches, [])
+  useFrame((_, delta) => {
+    const g = ref.current
+    if (!g) return
+    fx.shake = Math.max(0, fx.shake - delta * 1.2)
+    const a = reduced ? 0 : fx.shake * fx.shake * 1.4
+    g.position.set((Math.random() - 0.5) * a, (Math.random() - 0.5) * a * 0.6, (Math.random() - 0.5) * a)
+  })
+  return <group ref={ref}>{children}</group>
+}
+
 function Scene({ engine }: { engine: GameEngine }) {
+  const fx = useMemo(() => createFxBus(), [])
+  useEffect(() => () => {
+    fx.sparks.dispose()
+    fx.smoke.dispose()
+  }, [fx])
   const map = engine.config.map
   const tSig = useSyncExternalStore(engine.subscribe, () => towerSignature(engine))
   const eSig = useSyncExternalStore(engine.subscribe, () => enemySignature(engine))
@@ -99,14 +119,16 @@ function Scene({ engine }: { engine: GameEngine }) {
         shadow-normalBias={0.02}
       />
       <directionalLight position={[-size * 0.6, size * 0.4, -size * 0.5]} intensity={0.45} color="#8fb4ff" />
-      <Terrain map={map} occupied={occupied} />
-      {towers.map((t) => (
-        <TowerModel key={t.id} engine={engine} tower={t} leaving={!!t.leaving} />
-      ))}
-      {enemies.map((e) => (
-        <EnemyModel key={e.id} engine={engine} id={e.id} kind={e.kind} />
-      ))}
-      <FxLayer engine={engine} />
+      <ShakeGroup fx={fx}>
+        <Terrain map={map} occupied={occupied} />
+        {towers.map((t) => (
+          <TowerModel key={t.id} engine={engine} fx={fx} tower={t} leaving={!!t.leaving} />
+        ))}
+        {enemies.map((e) => (
+          <EnemyModel key={e.id} engine={engine} id={e.id} kind={e.kind} />
+        ))}
+        <FxLayer engine={engine} fx={fx} />
+      </ShakeGroup>
       <CameraRig map={map} />
       <EffectComposer multisampling={0}>
         <SMAA />
