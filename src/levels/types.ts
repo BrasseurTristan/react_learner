@@ -24,6 +24,22 @@ export interface Objective {
   check: (ctx: CheckContext) => boolean
 }
 
+/** Interactions simulées pendant les tests headless (clics, saisies), comme le ferait un joueur. */
+export interface PlaytestApi {
+  /** Le DOM rendu par le composant du joueur (panneau « Ton composant »). */
+  container: HTMLElement
+  phase: GameSnapshot['phase']
+  snapshot: GameSnapshot
+  /** Temps de jeu écoulé, en secondes. */
+  time: number
+  /** Clique sur le premier bouton dont le texte contient `text` (ou correspondant au sélecteur CSS). Renvoie false s'il est introuvable ou désactivé. */
+  click: (textOrSelector: string) => boolean
+  /** Change la valeur d'un <select> ou d'un <input> (déclenche onChange comme un vrai joueur). */
+  setValue: (selector: string, value: string) => boolean
+  /** Mémoire libre conservée entre deux appels (ex. : { done: true }). */
+  memory: Record<string, unknown>
+}
+
 export interface LevelDefinition {
   /** Identifiant stable, par ex. "01-jsx". Sert de clé de sauvegarde. */
   id: string
@@ -47,4 +63,10 @@ export interface LevelDefinition {
    */
   objectives: Objective[]
   game: GameConfig
+  /**
+   * Utilisé uniquement par les tests : appelé avant le lancement puis toutes les 0,5 s de jeu
+   * pour simuler les actions d'un joueur sur l'interface rendue par son composant.
+   * Indispensable dès qu'un niveau repose sur des clics ou des saisies.
+   */
+  playtest?: (ui: PlaytestApi) => void
 }

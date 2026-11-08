@@ -1,7 +1,7 @@
 import { Component, Profiler, type ReactNode, act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { GameEngine } from '../engine/engine'
-import type { LevelDefinition } from '../levels/types'
+import type { LevelDefinition, PlaytestApi } from '../levels/types'
 import { compileUserCode } from '../runtime/compile'
 import { buildCheckContext, evaluateObjectives, type ObjectiveResult } from '../runtime/evaluate'
 
@@ -27,6 +27,39 @@ class Boundary extends Component<{ onError: (e: Error) => void; children: ReactN
   }
   render() {
     return this.state.failed ? null : this.props.children
+  }
+}
+
+function makePlaytestApi(container: HTMLElement, engine: GameEngine, memory: Record<string, unknown>): PlaytestApi {
+  return {
+    container,
+    phase: engine.phase,
+    snapshot: engine.getSnapshot(),
+    time: engine.time,
+    memory,
+    click(textOrSelector) {
+      let el: HTMLElement | null = null
+      try {
+        el = container.querySelector<HTMLElement>(textOrSelector)
+      } catch {
+        /* pas un sélecteur CSS valide : on cherche par texte */
+      }
+      if (!el)
+        el = [...container.querySelectorAll<HTMLElement>('button, [role="button"]')].find((b) =>
+          (b.textContent ?? '').includes(textOrSelector),
+        ) ?? null
+      if (!el || (el as HTMLButtonElement).disabled) return false
+      el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+      return true
+    },
+    setValue(selector, value) {
+      const el = container.querySelector<HTMLInputElement | HTMLSelectElement>(selector)
+      if (!el) return false
+      const proto = el instanceof HTMLSelectElement ? HTMLSelectElement.prototype : HTMLInputElement.prototype
+      Object.getOwnPropertyDescriptor(proto, 'value')?.set?.call(el, value)
+      el.dispatchEvent(new Event(el instanceof HTMLSelectElement ? 'change' : 'input', { bubbles: true }))
+      return true
+    },
   }
 }
 
@@ -62,14 +95,23 @@ export async function simulateLevel(
       </Boundary>,
     )
   })
+  const memory: Record<string, unknown> = {}
+  const playtest = async () => {
+    if (!level.playtest || renderError) return
+    await act(async () => {
+      level.playtest!(makePlaytestApi(container, engine, memory))
+    })
+  }
+  await playtest()
   if (!renderError) {
     engine.startWave()
     let elapsed = 0
     while (!engine.isOver && elapsed < maxSeconds && !renderError) {
       await act(async () => {
-        for (let i = 0; i < 20 && !engine.isOver; i++) engine.tick(dt)
+        for (let i = 0; i < 10 && !engine.isOver; i++) engine.tick(dt)
       })
-      elapsed += dt * 20
+      elapsed += dt * 10
+      await playtest()
     }
   }
   const objectives = evaluateObjectives(level, buildCheckContext(engine, code, tsErrors, renderCount))

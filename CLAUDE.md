@@ -37,6 +37,7 @@ Copier la structure de `level01.ts` / `level02.ts`. Règles :
 - Objectifs : vérifient le **concept enseigné** (via `ctx.stats`, `ctx.towers`, `ctx.renderCount`, ou regex sur `ctx.codeNoComments`), pas seulement la victoire. Libellés courts en Markdown inline.
 - Le niveau doit être impossible à gagner sans utiliser le concept (vagues calibrées en conséquence).
 - 3 indices du plus vague au plus précis.
+- Si le niveau repose sur des clics ou saisies dans le panneau du joueur, définir `playtest` (voir `PlaytestApi` dans `types.ts`, exemple dans `src/testing/playtest.test.ts`) pour que les tests headless jouent comme un humain.
 
 ## Conventions
 
