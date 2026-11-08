@@ -125,6 +125,8 @@ export function LevelSession({ level, progress, onProgress, hasNext, onNext }: P
   const onUserRender = useCallback(() => {
     renderCount.current++
   }, [])
+  // Exposé en dev pour les vérifications dans le navigateur.
+  if (import.meta.env.DEV) (window as unknown as { __renderCount?: () => number }).__renderCount = () => renderCount.current
 
   // ── Actions ──
   const start = () => {

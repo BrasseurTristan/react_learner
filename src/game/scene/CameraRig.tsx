@@ -24,7 +24,7 @@ function fitDistance(map: MapDef, aspect: number, fov: number, dir: THREE.Vector
   const hw = map.width / 2 + 0.25
   const hd = map.depth / 2 + 0.25
   const corners: THREE.Vector3[] = []
-  for (const x of [-hw, hw]) for (const z of [-hd, hd]) for (const y of [-1.2, 1.4]) corners.push(new THREE.Vector3(x, y, z))
+  for (const x of [-hw, hw]) for (const z of [-hd, hd]) for (const y of [-1.0, 1.2]) corners.push(new THREE.Vector3(x, y, z))
   const v = new THREE.Vector3()
   const fits = (d: number) => {
     cam.position.copy(target).addScaledVector(dir, d)
@@ -34,7 +34,7 @@ function fitDistance(map: MapDef, aspect: number, fov: number, dir: THREE.Vector
     for (const c of corners) {
       v.copy(c).project(cam)
       // Marges : un peu plus en haut et en bas pour laisser respirer le HUD.
-      if (Math.abs(v.x) > 0.95 || v.y > 0.86 || v.y < -0.84 || v.z > 1) return false
+      if (Math.abs(v.x) > 0.96 || v.y > 0.84 || v.y < -0.86 || v.z > 1) return false
     }
     return true
   }
@@ -93,7 +93,7 @@ export function CameraRig({ map }: { map: MapDef }) {
     const ctrl = controls.current
     const it = intro.current
     if (it.t >= INTRO_DURATION) return
-    it.t = Math.min(INTRO_DURATION, it.t + Math.min(delta, 0.05))
+    it.t = Math.min(INTRO_DURATION, it.t + Math.min(delta, 0.2))
     const k = it.t / INTRO_DURATION
     const e = 1 - Math.pow(1 - k, 3)
     const polar = THREE.MathUtils.lerp(0.32, POLAR, e)

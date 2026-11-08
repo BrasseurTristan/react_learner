@@ -1,4 +1,4 @@
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Bloom, EffectComposer, SMAA, Vignette } from '@react-three/postprocessing'
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import * as THREE from 'three'
@@ -80,6 +80,9 @@ function ShakeGroup({ fx, children }: { fx: FxBus; children: React.ReactNode }) 
 
 function Scene({ engine }: { engine: GameEngine }) {
   const fx = useMemo(() => createFxBus(), [])
+  const getState = useThree((s) => s.get)
+  // Exposé en dev pour inspecter la scène depuis le navigateur.
+  if (import.meta.env.DEV) (window as unknown as { __r3f?: unknown }).__r3f = getState
   useEffect(() => () => {
     fx.sparks.dispose()
     fx.smoke.dispose()

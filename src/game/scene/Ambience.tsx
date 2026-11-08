@@ -175,8 +175,8 @@ function Clouds({ map }: { map: MapDef }) {
     const base = Math.max(map.width, map.depth) * 0.75
     return Array.from({ length: 11 }, (_, i) => ({
       angle: (i / 11) * Math.PI * 2 + rnd() * 0.4,
-      radius: base + 3 + rnd() * 9,
-      y: -0.4 + rnd() * 2.6,
+      radius: base + 5 + rnd() * 10,
+      y: -0.7 + rnd() * 1.6,
       speed: 0.008 + rnd() * 0.012,
       offsets: Array.from({ length: 5 }, (_, j) => [
         (j - 2) * 0.75 + (rnd() - 0.5) * 0.4,
@@ -216,7 +216,7 @@ function Clouds({ map }: { map: MapDef }) {
   return (
     <instancedMesh ref={ref} args={[undefined, undefined, count]} frustumCulled={false}>
       <icosahedronGeometry args={[1, 1]} />
-      <meshStandardMaterial color="#e9eeff" emissive="#4b5f9e" emissiveIntensity={0.25} roughness={1} flatShading transparent opacity={0.92} />
+      <meshStandardMaterial color="#f4f7ff" emissive="#8ea2e0" emissiveIntensity={0.35} roughness={1} flatShading transparent opacity={0.85} />
     </instancedMesh>
   )
 }
