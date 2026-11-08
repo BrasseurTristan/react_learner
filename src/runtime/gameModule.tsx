@@ -2,6 +2,7 @@ import { useEffect, useId, useSyncExternalStore } from 'react'
 import { ENEMIES, TOWERS, towerCost } from '../engine/balance'
 import type { GameEngine } from '../engine/engine'
 import type {
+  EnemyKind,
   GameEventName,
   GameEventPayload,
   GameSnapshot,
@@ -9,6 +10,24 @@ import type {
   TowerKind,
   TowerProps,
 } from '../engine/types'
+
+/** Fiche d'une tour exposée dans `TOWER_INFO`. */
+interface TowerInfo {
+  label: string
+  cost: number
+  range: number
+  hitsAir: boolean
+  pierce: boolean
+  description: string
+}
+
+/** Fiche d'un ennemi exposée dans `ENEMY_INFO`. */
+interface EnemyInfoEntry {
+  label: string
+  hp: number
+  flying: boolean
+  armored: boolean
+}
 
 /**
  * Construit le module `game` que le joueur importe dans son code :
@@ -56,10 +75,10 @@ export function createGameModule(engine: GameEngine) {
       k,
       { label: v.label, cost: v.cost, range: v.range, hitsAir: v.hitsAir, pierce: v.pierce, description: v.description },
     ]),
-  )
+  ) as Record<TowerKind, TowerInfo>
   const enemyInfo = Object.fromEntries(
     Object.entries(ENEMIES).map(([k, v]) => [k, { label: v.label, hp: v.hp, flying: v.flying, armored: v.armored }]),
-  )
+  ) as Record<EnemyKind, EnemyInfoEntry>
 
   return {
     Tower,

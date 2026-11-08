@@ -3,6 +3,15 @@ import type { ComponentType } from 'react'
 import { transform } from 'sucrase'
 import type { GameEngine } from '../engine/engine'
 import { createGameModule } from './gameModule'
+import { DEFAULT_LOOP_TIMEOUT_MS, LOOP_GUARD_NAME, createLoopGuard, instrumentLoops } from './loopGuard'
+
+export interface CompileOptions {
+  /**
+   * Durée maximale (ms) d'une exécution synchrone qui boucle avant de lever une erreur
+   * « Boucle infinie détectée ». `0` désactive le garde-fou. Défaut : 1000.
+   */
+  loopTimeoutMs?: number
+}
 
 export type CompileResult =
   | { ok: true; Component: ComponentType; js: string }
@@ -47,11 +56,15 @@ function makeConsole(engine: GameEngine) {
 
 /**
  * Compile et évalue le code du joueur, puis renvoie son composant exporté par défaut.
- * Le code n'a accès qu'aux modules `react` et `game`.
+ * Le code n'a accès qu'aux modules `react` et `game`. Ses boucles sont protégées
+ * contre les boucles infinies (voir `loopGuard.ts`).
  */
-export function compileUserCode(source: string, engine: GameEngine): CompileResult {
+export function compileUserCode(source: string, engine: GameEngine, options: CompileOptions = {}): CompileResult {
   const t = transpile(source)
   if (!t.ok) return t
+  const timeout = options.loopTimeoutMs ?? DEFAULT_LOOP_TIMEOUT_MS
+  const js = timeout > 0 ? instrumentLoops(t.js).code : t.js
+  const guard = timeout > 0 ? createLoopGuard(timeout) : () => true
   const gameModule = createGameModule(engine)
   const modules: Record<string, unknown> = {
     react: { ...React, default: React },
@@ -64,8 +77,8 @@ export function compileUserCode(source: string, engine: GameEngine): CompileResu
   const exports: Record<string, unknown> = {}
   const module = { exports }
   try {
-    const fn = new Function('require', 'exports', 'module', 'React', 'console', t.js)
-    fn(require, exports, module, React, makeConsole(engine))
+    const fn = new Function('require', 'exports', 'module', 'React', 'console', LOOP_GUARD_NAME, js)
+    fn(require, exports, module, React, makeConsole(engine), guard)
   } catch (err) {
     return { ok: false, error: `Erreur à l’exécution du module : ${(err as Error).message}` }
   }
@@ -80,5 +93,5 @@ export function compileUserCode(source: string, engine: GameEngine): CompileResu
         (named.length ? ` (exports trouvés : ${named.join(', ')})` : ''),
     }
   }
-  return { ok: true, Component: Component as ComponentType, js: t.js }
+  return { ok: true, Component: Component as ComponentType, js }
 }
