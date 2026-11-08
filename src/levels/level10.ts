@@ -103,6 +103,10 @@ Tu peux désactiver un bouton trop cher avec \`disabled={gold < prix}\` : condit
 > 💡 Rappel économique : l'or disponible = ta banque − le coût des tours actives.
 > **Vendre** une tour (la retirer du plan) te rembourse entièrement. Améliorer une tour
 > coûte la différence entre les deux niveaux (\`getTowerCost(kind, level)\`).
+
+> 📘 Dans le code de départ, \`Record<TowerKind, string>\` décrit un objet dont les **clés** sont
+> tous les \`TowerKind\` et les **valeurs** des \`string\` : \`Record<K, V>\` se lit « un objet qui
+> associe une valeur \`V\` à chaque clé \`K\` ». Oublie une clé et TypeScript te le signale !
 `,
   mission: `Ton or de départ ne paie que deux tours : ton plan devra **évoluer pendant la bataille**.
 Complète le reducer pour gérer les actions \`build\`, \`upgrade\` et \`sell\`, puis ajoute des boutons

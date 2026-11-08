@@ -32,6 +32,11 @@ const [kind, setKind] = useState<TowerKind>('archer')
 </select>
 \`\`\`
 
+> 💡 Pourquoi \`useState<TowerKind>('archer')\` et pas \`useState('archer')\` ? Sans précision,
+> TypeScript déduirait le type \`string\` à partir de la valeur initiale, et \`kind\` ne pourrait
+> plus être passé à \`<Tower kind={kind} />\`, qui n'accepte qu'un \`TowerKind\`. Les chevrons
+> \`<…>\` (un **générique**) indiquent à \`useState\` le type exact de l'état.
+
 Le cycle est toujours le même : le joueur choisit → \`onChange\` → \`setKind\` →
 nouveau rendu → le \`<select>\` affiche \`kind\`… et ta \`<Tower kind={kind} />\` change aussi !
 
