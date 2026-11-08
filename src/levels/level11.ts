@@ -77,21 +77,23 @@ function Button() {
 
 ## Les éléments magiques
 
-La prop \`element\` d'une tour multiplie ses dégâts :
+La prop \`element\` d'une tour ajoute +10 % de dégâts… et surtout, chaque ennemi a
+une **faiblesse** (×1,6) et une **résistance** (×0,55) :
 
-| Élément | Bonus de dégâts |
-|---|---|
-| \`neutral\` | aucun |
-| \`ice\` (Glace) | +10 % |
-| \`storm\` (Tempête) | +15 % |
-| \`fire\` (Feu) | +25 % |
+| Ennemi | Faible à | Résiste à |
+|---|---|---|
+| 👺 Gobelin (\`grunt\`) | 🔥 Feu | ⚡ Tempête |
+| 💨 Éclaireur (\`runner\`) | ❄️ Glace | 🔥 Feu |
+| 🛡️ Golem (\`tank\`) | ⚡ Tempête | 🔥 Feu |
+| 🦇 Chauve-souris (\`flyer\`) | ⚡ Tempête | ❄️ Glace |
 
-> 💡 Le bonus s'applique à tous les types de tours, sur tous les ennemis.
+> 💡 Aucun élément ne gagne seul : regarde la vague qui arrive et change d'élément.
+> Grâce au contexte, **un seul** \`setElement\` met à jour toutes les tours d'un coup !
 `,
   mission: `Ta forteresse est prête, mais ses tours ignorent l'élément choisi avec les boutons.
 Crée un **contexte** pour partager l'élément, **fournis-le** autour de la forteresse et **lis-le**
-dans \`ElementalTower\` — sans ajouter de prop \`element\` aux remparts. La Glace ne suffira pas
-contre les dernières vagues : **change d'élément** en cours de partie.`,
+dans \`ElementalTower\` — sans ajouter de prop \`element\` aux remparts. Chaque vague a sa faiblesse
+(voir la leçon) : **change d'élément** en cours de partie pour l'exploiter.`,
   starterCode: `import { useState } from 'react'
 import { Tower, type TowerKind } from 'game'
 
@@ -215,7 +217,7 @@ export default function Defense() {
   hints: [
     'Trois pièces à assembler : `createContext` (hors des composants), le Provider autour de `<Fortress />`, et `useContext` dans `ElementalTower`. Pense à les importer depuis `react`.',
     'Crée `const ElementContext = createContext<MagicElement>(\'ice\')`, puis dans `Defense` renvoie `<ElementContext.Provider value={element}>…</ElementContext.Provider>`.',
-    'Dans `ElementalTower` : `const element = useContext(ElementContext)` puis `<Tower slot={slot} kind={kind} element={element} />`. En jeu, clique sur **Feu** avant les golems blindés.',
+    'Dans `ElementalTower` : `const element = useContext(ElementContext)` puis `<Tower slot={slot} kind={kind} element={element} />`. En jeu : **Glace** contre les éclaireurs, **Feu** contre les gobelins, **Tempête** contre golems et chauves-souris.',
   ],
   objectives: [
     {
@@ -252,37 +254,26 @@ export default function Defense() {
     allowedTowers: ['archer', 'cannon', 'mage'],
     breakTime: 4,
     waves: [
+      // Vague 1 : éclaireurs rapides — faibles à la Glace.
+      { groups: [{ kind: 'runner', count: 26, interval: 0.45, hpScale: 2.4 }] },
+      // Vague 2 : horde de gobelins — faibles au Feu.
+      { groups: [{ kind: 'grunt', count: 28, interval: 0.45, hpScale: 2.6 }] },
+      // Vague 3 : golems et chauves-souris — faibles à la Tempête.
       {
         groups: [
-          { kind: 'grunt', count: 16, interval: 0.8, hpScale: 1.55 },
-          { kind: 'flyer', count: 8, interval: 1.2, delay: 4, hpScale: 1.55 },
+          { kind: 'tank', count: 9, interval: 1.6, hpScale: 2.3 },
+          { kind: 'flyer', count: 18, interval: 0.6, delay: 2, hpScale: 2.5 },
         ],
       },
-      {
-        groups: [
-          { kind: 'runner', count: 18, interval: 0.5, hpScale: 1.55 },
-          { kind: 'tank', count: 4, interval: 3, delay: 3, hpScale: 1.55 },
-        ],
-      },
-      {
-        groups: [
-          { kind: 'tank', count: 8, interval: 2.2, hpScale: 2.17 },
-          { kind: 'flyer', count: 14, interval: 0.8, delay: 2, hpScale: 2.17 },
-        ],
-      },
-      {
-        groups: [
-          { kind: 'grunt', count: 20, interval: 0.5, hpScale: 2.79 },
-          { kind: 'tank', count: 8, interval: 1.8, delay: 2, hpScale: 2.48 },
-          { kind: 'flyer', count: 14, interval: 0.7, delay: 4, hpScale: 2.48 },
-        ],
-      },
+      // Vague 4 : retour des gobelins, plus nombreux.
+      { groups: [{ kind: 'grunt', count: 34, interval: 0.4, hpScale: 3.1 }] },
     ],
   },
   playtest: (ui) => {
-    // Glace au début, puis Feu dès la deuxième vague.
-    if (!ui.memory.fire && ui.snapshot.wave >= 2) {
-      if (ui.click('Feu')) ui.memory.fire = true
-    }
+    // Comme un joueur attentif : regarde la vague en cours et choisit l'élément adapté.
+    const wave = ui.snapshot.currentWave ?? ui.snapshot.nextWave
+    if (!wave) return
+    const label = wave.kinds.includes('runner') ? 'Glace' : wave.kinds.includes('grunt') ? 'Feu' : 'Tempête'
+    if (ui.memory.last !== label && ui.click(label)) ui.memory.last = label
   },
 }

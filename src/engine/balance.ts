@@ -95,9 +95,30 @@ export const HIGH_GROUND_RANGE_BONUS = 1.2
 
 export const ELEMENTS: Record<Element, { label: string; color: string; damageBonus: number }> = {
   neutral: { label: 'Neutre', color: '#e2e8f0', damageBonus: 1 },
-  fire: { label: 'Feu', color: '#fb7185', damageBonus: 1.25 },
+  fire: { label: 'Feu', color: '#fb7185', damageBonus: 1.1 },
   ice: { label: 'Glace', color: '#7dd3fc', damageBonus: 1.1 },
-  storm: { label: 'Tempête', color: '#fde047', damageBonus: 1.15 },
+  storm: { label: 'Tempête', color: '#fde047', damageBonus: 1.1 },
+}
+
+/**
+ * Affinités élémentaires : chaque ennemi a une faiblesse et une résistance.
+ * Aucun élément ne domine, il faut l'adapter à la vague (cf. niveau 11).
+ */
+export const ELEMENT_WEAKNESS = 1.6
+export const ELEMENT_RESISTANCE = 0.55
+export const ENEMY_AFFINITY: Record<EnemyKind, { weak?: Element; resists?: Element }> = {
+  grunt: { weak: 'fire', resists: 'storm' },
+  runner: { weak: 'ice', resists: 'fire' },
+  tank: { weak: 'storm', resists: 'fire' },
+  flyer: { weak: 'storm', resists: 'ice' },
+  boss: {},
+}
+
+export function elementMultiplier(element: Element, enemy: EnemyKind): number {
+  const a = ENEMY_AFFINITY[enemy]
+  if (element === a.weak) return ELEMENT_WEAKNESS
+  if (element === a.resists) return ELEMENT_RESISTANCE
+  return 1
 }
 
 export const SPELLS = {

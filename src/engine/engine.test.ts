@@ -282,7 +282,7 @@ describe('combat', () => {
     engine.upsertTower('t', { slot: 'A', kind: 'archer', level: 3, element: 'fire' })
     const g = addEnemy(engine, 'grunt', 5, { hp: 500, maxHp: 500 })
     engine.tick(0.05)
-    expect(g.hp).toBeCloseTo(500 - TOWERS.archer.damage * (1 + 0.65 * 2) * 1.25)
+    expect(g.hp).toBeCloseTo(500 - TOWERS.archer.damage * (1 + 0.65 * 2) * 1.1 * 1.6)
   })
 
   it('le canon fait des dégâts de zone autour de sa cible', () => {

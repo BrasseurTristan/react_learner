@@ -8,9 +8,11 @@ import {
   TOWERS,
   towerCost,
   towerDamage,
+  elementMultiplier,
 } from './balance'
 import type {
   Effect,
+  Element,
   EnemyInfo,
   EnemyKind,
   EnemyState,
@@ -517,10 +519,10 @@ export class GameEngine {
         this.addEffect('explosion', target.x, target.z, 0.5)
         for (const e of [...this.enemies]) {
           if (e.flying && !stats.hitsAir) continue
-          if (Math.hypot(e.x - target.x, e.z - target.z) <= stats.splash) this.hit(e, dmg, stats.pierce)
+          if (Math.hypot(e.x - target.x, e.z - target.z) <= stats.splash) this.hit(e, dmg, stats.pierce, t.element)
         }
       } else {
-        this.hit(target, dmg, stats.pierce)
+        this.hit(target, dmg, stats.pierce, t.element)
         if (stats.slow) target.slowUntil = this.time + stats.slow.duration
       }
     }
@@ -543,8 +545,9 @@ export class GameEngine {
     return best
   }
 
-  private hit(e: EnemyState, dmg: number, pierce: boolean): void {
-    this.damage(e, e.armored && !pierce ? dmg * ARMOR_FACTOR : dmg)
+  private hit(e: EnemyState, dmg: number, pierce: boolean, element: Element): void {
+    const elemental = dmg * elementMultiplier(element, e.kind)
+    this.damage(e, e.armored && !pierce ? elemental * ARMOR_FACTOR : elemental)
   }
 
   private damage(e: EnemyState, dmg: number): void {
