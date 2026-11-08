@@ -143,7 +143,7 @@ export function LevelSession({ level, progress, onProgress, hasNext, onNext, all
     renderCount.current++
   }, [])
   // Exposé en dev pour les vérifications dans le navigateur.
-  if (import.meta.env.DEV) (window as unknown as { __renderCount?: () => number }).__renderCount = () => renderCount.current
+  if (import.meta.env.DEV) Object.assign(window, { __renderCount: () => renderCount.current, __engine: engine })
 
   // ── Actions ──
   const start = () => {
