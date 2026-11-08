@@ -1,0 +1,119 @@
+declare module 'game' {
+  /** Les 4 types de tours. */
+  export type TowerKind = 'archer' | 'cannon' | 'mage' | 'frost'
+  /** Les ennemis possibles. */
+  export type EnemyKind = 'grunt' | 'runner' | 'tank' | 'flyer' | 'boss'
+  /** Qui la tour vise en priorité. */
+  export type TargetMode = 'first' | 'strongest' | 'closest'
+  export type Element = 'neutral' | 'fire' | 'ice' | 'storm'
+  export type SpellName = 'freeze' | 'meteor'
+  export type Phase = 'build' | 'wave' | 'break' | 'victory' | 'defeat'
+
+  export interface TowerProps {
+    /** Identifiant de l'emplacement sur la carte, par ex. "A". */
+    slot: string
+    /** Type de tour à construire. */
+    kind: TowerKind
+    /** Niveau d'amélioration, de 1 à 3 (défaut : 1). Chaque niveau coûte plus cher. */
+    level?: number
+    /** Priorité de ciblage (défaut : 'first'). */
+    target?: TargetMode
+    /** Élément magique (défaut : 'neutral'). */
+    element?: Element
+  }
+
+  /**
+   * Construit une tour sur la carte tant que le composant est affiché.
+   * Elle ne rend rien dans le panneau : elle apparaît sur le plateau 3D.
+   */
+  export function Tower(props: TowerProps): null
+
+  export interface EnemyInfo {
+    id: number
+    kind: EnemyKind
+    hp: number
+    maxHp: number
+    flying: boolean
+    armored: boolean
+    /** De 0 (portail) à 1 (ta base). */
+    progress: number
+  }
+
+  export interface SlotInfo {
+    id: string
+    /** Les hauteurs donnent +20 % de portée. */
+    high: boolean
+    occupied: boolean
+  }
+
+  export interface WavePreview {
+    number: number
+    count: number
+    kinds: EnemyKind[]
+    hasFlying: boolean
+    hasArmored: boolean
+  }
+
+  export interface SpellInfo {
+    name: SpellName
+    ready: boolean
+    cooldown: number
+  }
+
+  /** Instantané de la partie. Ton composant se ré-affiche à chaque changement. */
+  export interface GameSnapshot {
+    phase: Phase
+    gold: number
+    lives: number
+    maxLives: number
+    /** Numéro de la vague en cours (0 avant le début). */
+    wave: number
+    totalWaves: number
+    time: number
+    slots: SlotInfo[]
+    enemies: EnemyInfo[]
+    /** La prochaine vague (ou null s'il n'y en a plus). */
+    nextWave: WavePreview | null
+    spells: SpellInfo[]
+    towerCount: number
+    kills: number
+  }
+
+  /** Hook : lit l'état de la partie en temps réel. */
+  export function useGame(): GameSnapshot
+
+  /** Lance un sort. Renvoie true si le sort a été lancé, false s'il est en recharge ou indisponible. */
+  export function castSpell(name: SpellName): boolean
+
+  export type GameEventName =
+    | 'waveStart'
+    | 'waveEnd'
+    | 'enemySpawn'
+    | 'enemyKilled'
+    | 'enemyLeaked'
+    | 'victory'
+    | 'defeat'
+
+  export interface GameEventPayload {
+    wave: number
+    enemy?: EnemyInfo
+  }
+
+  /**
+   * S'abonne à un événement du jeu.
+   * Renvoie une fonction de désabonnement — à appeler dans le nettoyage de ton useEffect !
+   */
+  export function onGameEvent(event: GameEventName, handler: (payload: GameEventPayload) => void): () => void
+
+  /** Coût total d'une tour pour un niveau donné. */
+  export function getTowerCost(kind: TowerKind, level?: number): number
+
+  /** Écrit un message dans le journal du jeu. */
+  export function log(message: unknown): void
+
+  export const TOWER_INFO: Record<
+    TowerKind,
+    { label: string; cost: number; range: number; hitsAir: boolean; pierce: boolean; description: string }
+  >
+  export const ENEMY_INFO: Record<EnemyKind, { label: string; hp: number; flying: boolean; armored: boolean }>
+}
