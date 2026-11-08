@@ -39,5 +39,7 @@
   },
   "engines": {
     "node": ">=22"
-  }
+  },
+  "license": "MIT",
+  "author": "Tristan Brasseur"
 }
