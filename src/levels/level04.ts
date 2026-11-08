@@ -98,7 +98,8 @@ Quand une liste change (un élément ajouté, retiré, déplacé), React doit sa
 > 💡 La \`key\` se met sur l'élément **renvoyé directement** par la fonction du \`.map()\`.
 > Ce n'est pas une vraie prop : le composant \`Tower\` ne la reçoit jamais.
 `,
-  mission: `Le canyon serpente et les ennemis arrivent en masse : il faut **au moins 6 tours**.
+  mission: `Le canyon serpente et les ennemis arrivent en masse : il faut **au moins 6 tours**
+(mélange archers et canons ; remplir les 8 emplacements te donnera encore plus de marge).
 Décris tes tours dans un **tableau** et génère-les avec \`.map()\`, chacune avec une \`key\` stable.
 Pas plus de **deux** \`<Tower>\` écrits à la main !`,
   starterCode: `import { Tower, type TowerKind } from 'game'
@@ -202,9 +203,11 @@ export default function Defense() {
       },
       {
         groups: [
-          { kind: 'flyer', count: 18, interval: 0.5, hpScale: 1.7 },
-          { kind: 'tank', count: 6, interval: 1.6, delay: 2, hpScale: 1.5 },
-          { kind: 'runner', count: 20, interval: 0.4, delay: 5, hpScale: 1.8 },
+          // Calibrée pour qu'une ligne naturelle de 6 tours (archers et canons alternés) gagne,
+          // alors que 2 tours écrites à la main perdent toujours.
+          { kind: 'flyer', count: 14, interval: 0.65, hpScale: 1.3 },
+          { kind: 'tank', count: 5, interval: 2, delay: 2, hpScale: 1.2 },
+          { kind: 'runner', count: 16, interval: 0.5, delay: 7, hpScale: 1.3 },
         ],
       },
     ],
