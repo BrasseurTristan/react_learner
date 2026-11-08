@@ -72,8 +72,16 @@ declare module 'game' {
     time: number
     slots: SlotInfo[]
     enemies: EnemyInfo[]
-    /** La prochaine vague (ou null s'il n'y en a plus). */
+    /**
+     * La prochaine vague (ou null s'il n'y en a plus).
+     * Attention : pendant une vague, `nextWave` décrit déjà la vague SUIVANTE.
+     */
     nextWave: WavePreview | null
+    /**
+     * La vague en cours, uniquement pendant la phase 'wave'.
+     * Vaut null avant le lancement ('build'), pendant les pauses ('break') et après la fin.
+     */
+    currentWave: WavePreview | null
     spells: SpellInfo[]
     towerCount: number
     kills: number

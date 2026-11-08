@@ -174,6 +174,8 @@ export interface GameSnapshot {
   slots: SlotInfo[]
   enemies: EnemyInfo[]
   nextWave: WavePreview | null
+  /** Vague en cours pendant la phase 'wave' ; null en 'build', 'break' et après la fin. */
+  currentWave: WavePreview | null
   spells: SpellInfo[]
   towerCount: number
   kills: number

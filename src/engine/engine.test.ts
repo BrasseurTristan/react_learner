@@ -394,23 +394,30 @@ describe('vagues, victoire et défaite', () => {
     }
     expect(engine.getSnapshot()).toMatchObject({ phase: 'build', wave: 0, totalWaves: 2 })
     expect(engine.getSnapshot().nextWave).toMatchObject({ number: 1, count: 1, kinds: ['grunt'] })
+    expect(engine.getSnapshot().currentWave).toBeNull()
     expect(engine.startWave()).toBe(true)
     expect(engine.startWave()).toBe(false)
     expect(engine.getSnapshot()).toMatchObject({ phase: 'wave', wave: 1 })
     expect(engine.getSnapshot().nextWave).toMatchObject({ number: 2, count: 2, kinds: ['runner'] })
+    expect(engine.getSnapshot().currentWave).toMatchObject({ number: 1, count: 1, kinds: ['grunt'] })
 
     run(engine, 20.5) // le gobelin (vitesse 1) parcourt les 20 cases
     expect(engine.phase).toBe('break')
     expect(engine.lives).toBe(9)
     expect(engine.getSnapshot().wave).toBe(2)
+    expect(engine.getSnapshot().currentWave).toBeNull()
+    expect(engine.getSnapshot().nextWave).toMatchObject({ number: 2 })
     run(engine, 2)
     expect(engine.phase).toBe('wave')
+    expect(engine.getSnapshot().currentWave).toMatchObject({ number: 2, count: 2, kinds: ['runner'], hasFlying: false })
+    expect(engine.getSnapshot().nextWave).toBeNull()
     run(engine, 30)
     expect(engine.phase).toBe('victory')
     expect(engine.isOver).toBe(true)
     expect(engine.lives).toBe(7)
     expect(engine.stats).toMatchObject({ wavesCleared: 2, leaks: 3 })
     expect(engine.getSnapshot().nextWave).toBeNull()
+    expect(engine.getSnapshot().currentWave).toBeNull()
     expect(events).toEqual([
       'waveStart:1',
       'enemySpawn:1',

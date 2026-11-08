@@ -658,6 +658,7 @@ export class GameEngine {
       slots: this.config.map.slots.map((s) => ({ id: s.id, high: !!s.high, occupied: occupied.has(s.id) })),
       enemies: this.enemies.map((e) => this.enemyInfo(e)),
       nextWave: this.wavePreview(nextIndex),
+      currentWave: this.phase === 'wave' ? this.wavePreview(this.waveIndex) : null,
       spells: (this.config.spells ?? []).map((name) => ({
         name,
         ready: this.spellCooldown(name) === 0,

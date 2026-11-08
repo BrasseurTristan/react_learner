@@ -205,6 +205,8 @@ function Info({ s }: { s: GameSnapshot }) {
   const e: EnemyInfo | undefined = s.enemies[0]
   const slot: SlotInfo | undefined = s.slots[0]
   const w: WavePreview | null = s.nextWave
+  const cw: WavePreview | null = s.currentWave
+  void cw
   const sp: SpellInfo | undefined = s.spells[0]
   return (
     <p>
@@ -308,7 +310,7 @@ export {}
     for (let i = 0; i < 40; i++) engine.tick(0.05)
     const s = engine.getSnapshot()
     expect(Object.keys(s).sort()).toEqual(
-      ['enemies', 'gold', 'kills', 'lives', 'maxLives', 'nextWave', 'phase', 'slots', 'spells', 'time', 'totalWaves', 'towerCount', 'wave'].sort(),
+      ['currentWave', 'enemies', 'gold', 'kills', 'lives', 'maxLives', 'nextWave', 'phase', 'slots', 'spells', 'time', 'totalWaves', 'towerCount', 'wave'].sort(),
     )
     expect(Object.keys(s.enemies[0]).sort()).toEqual(['armored', 'flying', 'hp', 'id', 'kind', 'maxHp', 'progress'])
     expect(Object.keys(s.slots[0]).sort()).toEqual(['high', 'id', 'occupied'])
