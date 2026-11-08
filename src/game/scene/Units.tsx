@@ -91,7 +91,7 @@ function TowerBody({ kind, color, ghost }: { kind: TowerKind; color: string; gho
   }
 }
 
-export function TowerModel({ engine, tower }: { engine: GameEngine; tower: TowerState }) {
+export function TowerModel({ engine, tower, leaving }: { engine: GameEngine; tower: TowerState; leaving?: boolean }) {
   const root = useRef<THREE.Group>(null)
   const range = useRef<THREE.Mesh>(null)
   const map = engine.config.map
@@ -102,7 +102,7 @@ export function TowerModel({ engine, tower }: { engine: GameEngine; tower: Tower
     const g = root.current
     if (!g) return
     const live = engine.towers.get(tower.id)
-    const targetScale = ghost ? 0.9 : 1
+    const targetScale = leaving ? 0.001 : ghost ? 0.9 : 1
     const s = THREE.MathUtils.lerp(g.scale.x, targetScale, Math.min(1, delta * 8))
     g.scale.setScalar(s)
     const head = g.getObjectByName('head')
