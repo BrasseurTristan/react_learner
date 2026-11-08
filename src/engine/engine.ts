@@ -107,6 +107,8 @@ export class GameEngine {
   private lastNotify = -Infinity
   private churn: number[] = []
   private churnWarned = false
+  /** Coût payé par chaque tour active au dernier calcul : une tour déjà construite garde sa priorité. */
+  private paid = new Map<string, number>()
 
   constructor(config: GameConfig) {
     this.config = config
@@ -146,6 +148,7 @@ export class GameEngine {
     this.stats.maxSubscriptions = active
     this.churn = []
     this.churnWarned = false
+    this.paid.clear()
     this.resolveTowers()
     this.notify(true)
   }
@@ -236,9 +239,16 @@ export class GameEngine {
     }
   }
 
-  /** Recalcule le statut de chaque tour (valide, payée, conflit de slot…). */
+  /**
+   * Recalcule le statut de chaque tour (valide, payée, conflit de slot…).
+   * Les tours déjà actives dont le coût n'a pas changé passent en premier : l'or qui arrive
+   * ne doit jamais démonter une tour construite au profit d'une tour impayée déclarée avant elle.
+   * Les autres tours sont servies dans l'ordre de déclaration.
+   */
   private resolveTowers(): void {
-    const sorted = [...this.towers.values()].sort((a, b) => a.order - b.order)
+    const kept = (t: TowerState) =>
+      TOWER_KINDS.includes(t.kind) && this.paid.get(t.id) === towerCost(t.kind, t.level) ? 0 : 1
+    const sorted = [...this.towers.values()].sort((a, b) => kept(a) - kept(b) || a.order - b.order)
     const taken = new Set<string>()
     let remaining = this.bank
     let active = 0
@@ -300,6 +310,8 @@ export class GameEngine {
         }
       }
     }
+    this.paid.clear()
+    for (const t of sorted) if (t.status === 'active') this.paid.set(t.id, t.cost)
     this.stats.maxActiveTowers = Math.max(this.stats.maxActiveTowers, active)
     this.stats.goldSpentPeak = Math.max(this.stats.goldSpentPeak, this.bank - remaining)
   }
@@ -386,7 +398,7 @@ export class GameEngine {
   // ───────────────────────── Boucle de jeu ─────────────────────────
 
   tick(dt: number): void {
-    if (dt <= 0) return
+    if (!(dt > 0)) return
     dt = Math.min(dt, 0.1)
     this.time += dt
     this.effects = this.effects.filter((e) => this.time - e.born < e.ttl)
