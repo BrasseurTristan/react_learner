@@ -76,7 +76,8 @@ export default function Defense() {
     {
       id: 'returns-jsx',
       label: 'Renvoyer du JSX avec `<Tower />`',
-      check: (ctx) => has(ctx, /return\s*\(?\s*<Tower\b/),
+      // `return <Tower …/>`, fonction fléchée `() => <Tower …/>` ou fragment contenant une tour.
+      check: (ctx) => has(ctx, /(\breturn|=>)\s*\(?\s*<(Tower\b|>|(React\.)?Fragment\b)/) && has(ctx, /<Tower\b/),
     },
     {
       id: 'archer-on-a',

@@ -142,15 +142,18 @@ export default function Defense() {
     {
       id: 'tower-kind',
       label: 'Typer `kind` avec `TowerKind`',
-      check: (ctx) => has(ctx, /import\s*\{[^}]*\bTowerKind\b[^}]*\}\s*from\s*['"]game['"]/) && has(ctx, /kind\??\s*:\s*TowerKind\b/),
+      check: (ctx) => has(ctx, /import\s+(type\s+)?\{[^}]*\bTowerKind\b[^}]*\}\s*from\s*['"]game['"]/) && has(ctx, /kind\??\s*:\s*TowerKind\b/),
     },
     {
       id: 'reuse',
       label: 'Réutiliser ton composant au moins **2 fois**',
       check: (ctx) => {
-        const names = [...ctx.codeNoComments.matchAll(/function\s+([A-Z]\w*)\s*\(/g)]
-          .map((m) => m[1])
-          .filter((n) => !new RegExp(`export\\s+default\\s+function\\s+${n}\\b`).test(ctx.codeNoComments))
+        // `function Bastion(…)` ou `const Bastion = (…) => …`, hors composant exporté par défaut.
+        const declared =
+          /\bfunction\s+([A-Z]\w*)\s*\(|\b(?:const|let)\s+([A-Z]\w*)\s*(?::[^=]+)?=\s*(?:\(|function\b|async\b|[A-Za-z_$][\w$]*\s*=>)/g
+        const names = [...ctx.codeNoComments.matchAll(declared)]
+          .map((m) => m[1] ?? m[2])
+          .filter((n) => !new RegExp(`export\\s+default\\s+(function\\s+)?${n}\\b`).test(ctx.codeNoComments))
         return names.some((n) => count(ctx, new RegExp(`<${n}\\b`)) >= 2)
       },
     },

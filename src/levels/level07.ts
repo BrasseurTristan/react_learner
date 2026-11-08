@@ -1,4 +1,4 @@
-import { has } from './checks'
+import { has, jsxAttrs } from './checks'
 import { MEADOW } from './maps'
 import type { LevelDefinition } from './types'
 
@@ -154,18 +154,23 @@ export default function Defense() {
     {
       id: 'controlled-select',
       label: '`<select>` contrôlé (`value` + `onChange`)',
-      check: (ctx) =>
-        has(ctx, /<select\b[^>]*\bvalue=\{/) && has(ctx, /<select\b[^>]*\bonChange=\{/),
+      check: (ctx) => jsxAttrs(ctx, 'select', ['value', 'onChange']),
     },
     {
       id: 'controlled-input',
       label: '`<input>` contrôlé (`value` + `onChange`)',
-      check: (ctx) => has(ctx, /<input\b[^>]*\bvalue=\{/) && has(ctx, /<input\b[^>]*\bonChange=\{/),
+      check: (ctx) => jsxAttrs(ctx, 'input', ['value', 'onChange']),
     },
     {
       id: 'typed-value',
       label: 'Convertir `e.target.value` (`as TowerKind`, `Number(…)`)',
-      check: (ctx) => has(ctx, /\bas\s+TowerKind\b/) && has(ctx, /Number\(\s*\w+\.(currentTarget|target)\.value\s*\)/),
+      // `Number(e.target.value)`, `Number(target.value)` (déstructuré), `parseInt(…)`, `+e.target.value`
+      // ou directement `e.target.valueAsNumber`.
+      check: (ctx) =>
+        has(ctx, /\bas\s+TowerKind\b/) &&
+        (has(ctx, /\b(Number|parseInt|parseFloat)\(\s*([\w$]+\.)*(currentTarget|target)\.value\b/) ||
+          has(ctx, /\+\s*([\w$]+\.)*(currentTarget|target)\.value\b/) ||
+          has(ctx, /\.valueAsNumber\b/)),
     },
     {
       id: 'switched',

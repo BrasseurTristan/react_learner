@@ -1,4 +1,4 @@
-import { has } from './checks'
+import { has, jsxAttr } from './checks'
 import { CANYON } from './maps'
 import type { MapDef } from '../engine/types'
 import type { LevelDefinition, PlaytestApi } from './types'
@@ -182,17 +182,22 @@ export default function Defense() {
     {
       id: 'use-state',
       label: 'Mémoriser le niveau avec `useState`',
-      check: (ctx) => has(ctx, /\buseState\b[^(]*\(/) && has(ctx, /import\s*\{[^}]*\buseState\b[^}]*\}\s*from\s*['"]react['"]/),
+      // `useState(…)` importé depuis react, ou `React.useState(…)`.
+      check: (ctx) =>
+        (has(ctx, /(?<![\w$.])useState\s*(<[^>]*>)?\s*\(/) &&
+          has(ctx, /import\s*\{[^}]*\buseState\b[^}]*\}\s*from\s*['"]react['"]/)) ||
+        (has(ctx, /\bReact\.useState\s*(<[^>]*>)?\s*\(/) &&
+          has(ctx, /import\s+(\*\s+as\s+)?React\b[^;\n]*from\s*['"]react['"]/)),
     },
     {
       id: 'on-click',
       label: 'Un bouton avec `onClick`',
-      check: (ctx) => has(ctx, /<button\b[^>]*\bonClick=\{/),
+      check: (ctx) => jsxAttr(ctx, 'button', 'onClick'),
     },
     {
       id: 'functional-update',
       label: 'Mise à jour fonctionnelle : `setX((x) => …)`',
-      check: (ctx) => has(ctx, /\bset[A-Z]\w*\(\s*(\(\s*\w+\s*\)|\w+)\s*=>/),
+      check: (ctx) => has(ctx, /\bset[A-Z]\w*\(\s*(\(\s*\w+\s*(:\s*\w+\s*)?\)|\w+)\s*=>/),
     },
     {
       id: 'level-3',

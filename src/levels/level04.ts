@@ -1,6 +1,29 @@
-import { count, has } from './checks'
+import { callArguments, count, functionParams, jsxOpeningTags, type JsxTag } from './checks'
 import { CANYON } from './maps'
-import type { LevelDefinition } from './types'
+import type { CheckContext, LevelDefinition } from './types'
+
+/**
+ * Chaque `.map(callback)` qui renvoie un composant (`<Tower>`, `<Bastion>`… : nom en majuscule),
+ * avec les balises qu'il renvoie directement et le nom de son paramètre d'index éventuel.
+ * Accepte `map((p) => <Tower …/>)`, `map((p) => { return <Tower …/> })`, etc.
+ */
+function componentMaps(ctx: CheckContext): { returned: JsxTag[]; index: string | undefined }[] {
+  return callArguments(ctx, /\.map/)
+    .filter((arg) => /=>|\bfunction\b/.test(arg))
+    .map((arg) => {
+      const components = jsxOpeningTags(arg).filter((t) => /^[A-Z]/.test(t.name))
+      // Balises renvoyées : juste après `=>`, `return`, `?`, `:` ou `&&` (parenthèses ignorées).
+      const returned = components.filter((t) => /(=>|\breturn|[?:]|&&|\|\|)[\s(]*$/.test(arg.slice(0, t.start)))
+      return { returned: returned.length ? returned : components.slice(0, 1), index: functionParams(arg)[1] }
+    })
+    .filter((m) => m.returned.length > 0)
+}
+
+/** Vrai si la valeur de `key` n'est que l'index du `.map()` (`i`, `String(i)`, `` `${i}` ``…). */
+function isIndexKey(key: string, index: string | undefined): boolean {
+  const bare = key.replace(/String\(|\.toString\(\)|[`${}()\s]/g, '')
+  return bare === index || /^(i|idx|index)$/.test(bare)
+}
 
 export const level04: LevelDefinition = {
   id: '04-lists-keys',
@@ -129,13 +152,23 @@ export default function Defense() {
     {
       id: 'map',
       label: 'Générer les tours avec `.map()`',
-      check: (ctx) => has(ctx, /\.map\(\s*\(?[^)]*\)?\s*=>\s*\(?\s*<Tower\b/),
+      check: (ctx) => componentMaps(ctx).length > 0,
     },
     {
       id: 'key',
       label: 'Donner une `key` stable à chaque tour (pas l’index)',
-      check: (ctx) =>
-        has(ctx, /<Tower\b[^>]*\bkey=\{/) && !has(ctx, /key=\{\s*(i|idx|index)\s*\}/) && !has(ctx, /\.map\(\s*\(\s*\w+\s*,\s*(\w+)\s*\)[^]*key=\{\s*\1\s*\}/),
+      check: (ctx) => {
+        const maps = componentMaps(ctx)
+        return (
+          maps.length > 0 &&
+          maps.every(({ returned, index }) =>
+            returned.every((tag) => {
+              const key = tag.attrs.get('key')
+              return typeof key === 'string' && !isIndexKey(key, index)
+            }),
+          )
+        )
+      },
     },
     {
       id: 'few-handwritten',

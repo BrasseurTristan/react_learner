@@ -1,4 +1,4 @@
-import { has } from './checks'
+import { has, hasTernary } from './checks'
 import { MEADOW } from './maps'
 import type { LevelDefinition } from './types'
 
@@ -146,7 +146,7 @@ export default function Defense() {
     {
       id: 'ternary',
       label: 'Choisir avec un ternaire `? :`',
-      check: (ctx) => has(ctx, /[^?\s]\s*\?\s*['"<(\w][^:\n]*:/),
+      check: (ctx) => hasTernary(ctx),
     },
     {
       id: 'adapt',

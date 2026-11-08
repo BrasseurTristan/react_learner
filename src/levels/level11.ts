@@ -1,4 +1,4 @@
-import { count, has } from './checks'
+import { has, jsxAttr, jsxTags } from './checks'
 import { CANYON } from './maps'
 import type { LevelDefinition } from './types'
 
@@ -228,7 +228,16 @@ export default function Defense() {
     {
       id: 'provider',
       label: 'Fournir l’élément avec un Provider',
-      check: (ctx) => has(ctx, /<\w+\.Provider\s[^>]*value=/) || has(ctx, /<\w+Context\s[^>]*value=/),
+      // `<ElementContext value={…}>` (React 19) ou `<ElementContext.Provider value={…}>`,
+      // pour n'importe quel identifiant créé par createContext.
+      check: (ctx) => {
+        const contexts = [
+          ...ctx.codeNoComments.matchAll(/\b(?:const|let)\s+([A-Za-z_$][\w$]*)\s*(?::[^=]+)?=\s*(?:React\.)?createContext\b/g),
+        ].map((m) => m[1])
+        return jsxTags(ctx, /\.Provider$|^[A-Z]/).some(
+          (t) => t.attrs.has('value') && (t.name.endsWith('.Provider') || contexts.includes(t.name)),
+        )
+      },
     },
     {
       id: 'use-context',
@@ -239,7 +248,7 @@ export default function Defense() {
       id: 'no-drilling',
       label: 'Aucun prop drilling : pas de prop `element` sur tes composants',
       check: (ctx) =>
-        count(ctx, /<(?!Tower\b)[A-Z]\w*\b[^>]*\belement=/) === 0 && count(ctx, /<Tower\b[^>]*\belement=\{/) > 0,
+        !jsxAttr(ctx, /^(?!Tower$)[A-Z]/, 'element') && jsxTags(ctx, 'Tower').some((t) => typeof t.attrs.get('element') === 'string'),
     },
     {
       id: 'two-elements',

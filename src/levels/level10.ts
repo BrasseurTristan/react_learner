@@ -1,4 +1,4 @@
-import { has } from './checks'
+import { has, jsxAttr, typeDeclarations } from './checks'
 import { MEADOW } from './maps'
 import type { LevelDefinition, PlaytestApi } from './types'
 
@@ -258,8 +258,17 @@ export default function Defense() {
     {
       id: 'union',
       label: 'Une union discriminée `build | upgrade | sell`',
-      check: (ctx) =>
-        ['build', 'upgrade', 'sell'].every((t) => has(ctx, new RegExp(`type\\s*:\\s*['"]${t}['"]\\s*;`))),
+      // Les trois littéraux doivent apparaître comme `type: '…'` dans des déclarations de type
+      // (`;`, virgule ou retour à la ligne, en alias d'union comme en interfaces).
+      check: (ctx) => {
+        const decls = typeDeclarations(ctx)
+        return (
+          decls.some((d) => /=[^]*\|/.test(d.text)) &&
+          ['build', 'upgrade', 'sell'].every((t) =>
+            decls.some((d) => new RegExp(`\\btype\\s*:\\s*['"]${t}['"]`).test(d.text)),
+          )
+        )
+      },
     },
     {
       id: 'switch',
@@ -272,7 +281,17 @@ export default function Defense() {
     {
       id: 'dispatch',
       label: 'Des boutons qui appellent `dispatch`',
-      check: (ctx) => has(ctx, /onClick=\{[^}]*\w+\(\s*\{\s*type\s*:\s*['"]upgrade['"]/),
+      // Directement (`onClick={() => dispatch({ type: 'upgrade', … })}`) ou via une fonction
+      // intermédiaire (`const upgrade = (slot) => dispatch({ type: 'upgrade', slot })`).
+      check: (ctx) => {
+        const code = ctx.codeNoComments
+        const name = /\[\s*\w+\s*,\s*([A-Za-z_$][\w$]*)\s*\]\s*=\s*(?:React\.)?useReducer\b/.exec(code)?.[1] ?? 'dispatch'
+        const typeRanges = typeDeclarations(ctx)
+        const outsideTypes = (i: number) => !typeRanges.some((d) => i >= d.start && i < d.end)
+        const dispatched = [...code.matchAll(/\btype\s*:\s*['"]upgrade['"]/g)].some((m) => outsideTypes(m.index))
+        const called = new RegExp(`(?<![\\w$.])${name.replace(/\$/g, '\\$')}\\s*\\(`).test(code)
+        return dispatched && called && jsxAttr(ctx, 'button', 'onClick')
+      },
     },
     {
       id: 'evolved',
