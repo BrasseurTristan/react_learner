@@ -69,6 +69,10 @@ onGameEvent('enemySpawn', ({ enemy }) => {
 })
 \`\`\`
 
+Pourquoi \`enemy?.kind\` ? Le champ \`enemy\` n'existe que pour les événements qui concernent un
+ennemi (\`waveStart\` n'en a pas) : il est donc **optionnel** dans le type. Le \`?.\` renvoie
+\`undefined\` au lieu de planter quand \`enemy\` est absent, et TypeScript l'exige.
+
 Événements disponibles : \`waveStart\`, \`waveEnd\`, \`enemySpawn\`, \`enemyKilled\`,
 \`enemyLeaked\` (un ennemi atteint ta base), \`victory\`, \`defeat\`.
 

@@ -85,8 +85,9 @@ avec un \`type\` (en important \`TowerKind\`), puis **réutilise** \`<Bastion />
 au moins **trois emplacements** face aux gobelins, chauves-souris et golems.`,
   starterCode: `import { Tower } from 'game'
 
-// Notre propre composant : un bastion construit une tour.
+// Ton propre composant : un bastion construit une tour.
 // ⚠️ TypeScript se plaint : ses props n'ont pas de type !
+// TODO : importe le type TowerKind : import { Tower, type TowerKind } from 'game'
 // TODO : crée un type BastionProps (slot, kind, level optionnel)
 //        et annote le paramètre : function Bastion({ ... }: BastionProps)
 function Bastion({ slot, kind }) {

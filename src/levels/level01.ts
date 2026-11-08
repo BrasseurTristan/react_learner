@@ -28,7 +28,9 @@ en réalité un appel de fonction qui décrit *ce qu'on veut voir à l'écran*.
 Les balises qui commencent par une **minuscule** (\`<div>\`, \`<p>\`) sont des éléments HTML.
 Celles qui commencent par une **majuscule** (\`<Tower />\`) sont des **composants**.
 
-Une balise sans enfant doit se fermer elle-même avec \`/>\` :
+En JSX, **toute balise doit être fermée** : soit par une balise fermante
+(\`<Tower slot="A" kind="archer"></Tower>\`), soit, quand elle n'a pas d'enfant, en se fermant
+elle-même avec \`/>\` — c'est plus court et c'est l'usage :
 
 \`\`\`tsx
 <Tower slot="A" kind="archer" />

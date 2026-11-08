@@ -82,7 +82,7 @@ export default function Defense() {
 `,
   hints: [
     'Un composant ne renvoie qu’un seul élément : enveloppe tes tours dans `<>` et `</>`.',
-    'Les nombres se passent entre accolades : `level={2}`. Pense à remplacer le canon par des archers pour les volants.',
+    'Les nombres se passent entre accolades : `level={2}`. Pense à ajouter des archers : eux seuls touchent les volants.',
     'Par exemple : `return (<><Tower slot="A" kind="archer" level={2} /><Tower slot="B" kind="archer" /></>)`',
   ],
   objectives: [

@@ -36,12 +36,17 @@ tu décris ce que tu veux *en fonction de l'état*, React s'occupe du reste.
 \`useGame\` est un **hook** : une fonction dont le nom commence par \`use\` et qui
 « accroche » ton composant à quelque chose (ici, l'état du jeu). Deux règles à retenir :
 
-1. On appelle un hook **tout en haut** du composant, jamais dans un \`if\`, une boucle ou après un \`return\`.
+1. On appelle un hook **au premier niveau du composant**, jamais dans un \`if\`, une boucle ou une
+   fonction imbriquée (ni après un \`return\` anticipé).
 2. On ne l'appelle **que dans un composant** (ou dans un autre hook).
 
 Tu découvriras d'autres hooks très bientôt (\`useState\`, \`useEffect\`…).
 
 ## Afficher… ou pas : \`&&\`
+
+Petit rappel : ton composant peut renvoyer, en plus des tours, des éléments HTML comme \`<p>\`.
+Ils s'affichent dans le panneau **« Ton composant »**, à côté du plateau : pratique pour te
+laisser des messages !
 
 Pour afficher un élément **seulement si** une condition est vraie, on utilise \`&&\` :
 
