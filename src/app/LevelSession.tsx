@@ -251,9 +251,11 @@ export function LevelSession({ level, progress, onProgress, hasNext, onNext, all
                   ⟲ Réinitialiser
                 </button>
               )}
-              <button className="btn primary small" onClick={() => run(code)} title={`Exécuter (${MOD_KEY} + S)`}>
-                ▶ Exécuter <kbd>{MOD_KEY} S</kbd>
-              </button>
+              {!confirmReset && (
+                <button className="btn primary small" onClick={() => run(code)} title={`Exécuter (${MOD_KEY} + S)`}>
+                  ▶ Exécuter <kbd>{MOD_KEY} S</kbd>
+                </button>
+              )}
             </div>
           </div>
           <div className="editor-host">

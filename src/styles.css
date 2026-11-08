@@ -218,7 +218,20 @@ code {
 /* ───────── Mission ───────── */
 
 .mission {
+  display: flex;
+  flex-direction: column;
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 46%;
   padding: 16px 18px;
+}
+
+.mission > .stagger:nth-child(2) {
+  min-height: 0;
+  overflow: auto;
+  margin-right: -10px;
+  padding-right: 10px;
+  scrollbar-width: thin;
 }
 
 .mission-head {
@@ -387,7 +400,7 @@ code {
 /* ───────── Éditeur ───────── */
 
 .editor {
-  flex: 1;
+  flex: 1 0 240px;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -1260,6 +1273,7 @@ kbd {
 }
 
 .inline-confirm {
+  white-space: nowrap;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1682,6 +1696,9 @@ kbd {
 /* ───────── Responsive (suite) ───────── */
 
 @media (max-width: 1000px) {
+  .mission {
+    max-height: none;
+  }
   .topbar {
     gap: 10px;
     padding: 0 12px;

@@ -28,7 +28,12 @@ export function LevelIntro({ level, onDone }: { level: LevelDefinition; onDone: 
       if (reduced) return done.current()
       animate(el, { opacity: { to: 0 }, translateY: { to: -12 }, duration: 450, ease: 'inQuad', onComplete: () => done.current() })
     }, hold)
-    return () => clearTimeout(t)
+    // Filet de sécurité si l'animation est suspendue (onglet en arrière-plan)
+    const safety = setTimeout(() => done.current(), hold + 900)
+    return () => {
+      clearTimeout(t)
+      clearTimeout(safety)
+    }
   }, [])
   return (
     <div className="level-intro" ref={ref} aria-live="polite">
