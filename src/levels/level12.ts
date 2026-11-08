@@ -42,27 +42,29 @@ nom commence par \`use\`** et qui **appelle d'autres hooks**. Il permet d'extrai
 avec état pour la réutiliser ou, tout simplement, pour garder tes composants lisibles.
 
 \`\`\`tsx
-function useWaveTimer(): number {
-  const { phase } = useGame()
-  const [seconds, setSeconds] = useState(0)
+/** Nombre d'ennemis vaincus depuis le début de la vague. */
+function useWaveKills(): number {
+  const [kills, setKills] = useState(0)
 
   useEffect(() => {
-    if (phase !== 'wave') return
-    setSeconds(0)
-    const id = setInterval(() => setSeconds((s) => s + 1), 1000)
-    return () => clearInterval(id)
-  }, [phase])
+    const offStart = onGameEvent('waveStart', () => setKills(0))
+    const offKill = onGameEvent('enemyKilled', () => setKills((k) => k + 1))
+    return () => {
+      offStart()
+      offKill()
+    }
+  }, [])
 
-  return seconds
+  return kills
 }
 
 function Hud() {
-  const seconds = useWaveTimer() // s'utilise comme n'importe quel hook
-  return <p>Vague en cours depuis {seconds} s</p>
+  const kills = useWaveKills() // s'utilise comme n'importe quel hook
+  return <p>Ennemis vaincus cette vague : {kills}</p>
 }
 \`\`\`
 
-\`Hud\` ne sait rien de \`setInterval\` ni du nettoyage : toute la mécanique est **encapsulée**.
+\`Hud\` ne sait rien des abonnements ni du nettoyage : toute la mécanique est **encapsulée**.
 
 ## Les règles des hooks
 
@@ -94,8 +96,9 @@ const threat = currentWave ?? nextWave // la vague en cours, sinon celle qui arr
 \`\`\`
 
 Pas besoin d'état pour ça : c'est une valeur **dérivée** de ce que renvoie \`useGame()\`.
-En revanche, « le boss est-il en vie ? » n'apparaît nulle part : c'est à toi de le
+En revanche, « combien de boss sont en vie ? » n'apparaît nulle part : c'est à toi de le
 **mémoriser** (\`useState\`) en écoutant les événements du jeu (\`useEffect\` + \`onGameEvent\`).
+Un compteur plutôt qu'un booléen : la dernière vague en envoie **deux** !
 
 ## Le Seigneur ombre
 
@@ -156,9 +159,10 @@ function planFor(threat: WavePreview | null, bossAlive: boolean): PlannedTower[]
 
 // TODO : écris ton hook personnalisé.
 // - useGame() : la menace est la vague en cours (currentWave) ou, à défaut, la prochaine (nextWave)
-// - un état « bossAlive » piloté par onGameEvent('enemySpawn' / 'enemyKilled' / 'enemyLeaked')
-//   (sans oublier le nettoyage !), et castSpell('freeze') / castSpell('meteor') à l'arrivée du boss
-// - renvoie planFor(threat, bossAlive)
+// - un état « bossesAlive » (nombre de boss en vie : la dernière vague en a deux !) piloté par
+//   onGameEvent('enemySpawn' / 'enemyKilled' / 'enemyLeaked') (sans oublier le nettoyage !),
+//   et castSpell('freeze') / castSpell('meteor') à l'arrivée de chaque boss
+// - renvoie planFor(threat, bossesAlive > 0)
 function useBattlePlan(): PlannedTower[] {
   return planFor(null, false)
 }
@@ -195,26 +199,30 @@ function planFor(threat: WavePreview | null, bossAlive: boolean): PlannedTower[]
 
 function useBattlePlan(): PlannedTower[] {
   const { currentWave, nextWave } = useGame()
-  const [bossAlive, setBossAlive] = useState(false)
+  // Un compteur, pas un booléen : la dernière vague envoie deux boss.
+  const [bossesAlive, setBossesAlive] = useState(0)
 
   useEffect(() => {
     const offSpawn = onGameEvent('enemySpawn', ({ enemy }) => {
       if (enemy?.kind !== 'boss') return
-      setBossAlive(true)
+      setBossesAlive((n) => n + 1)
       castSpell('freeze')
       castSpell('meteor')
     })
-    const offGone = [
-      onGameEvent('enemyKilled', ({ enemy }) => enemy?.kind === 'boss' && setBossAlive(false)),
-      onGameEvent('enemyLeaked', ({ enemy }) => enemy?.kind === 'boss' && setBossAlive(false)),
-    ]
+    const offKilled = onGameEvent('enemyKilled', ({ enemy }) => {
+      if (enemy?.kind === 'boss') setBossesAlive((n) => n - 1)
+    })
+    const offLeaked = onGameEvent('enemyLeaked', ({ enemy }) => {
+      if (enemy?.kind === 'boss') setBossesAlive((n) => n - 1)
+    })
     return () => {
       offSpawn()
-      offGone.forEach((off) => off())
+      offKilled()
+      offLeaked()
     }
   }, [])
 
-  return planFor(currentWave ?? nextWave, bossAlive)
+  return planFor(currentWave ?? nextWave, bossesAlive > 0)
 }
 
 export default function Defense() {
@@ -230,8 +238,8 @@ export default function Defense() {
 `,
   hints: [
     'Ton hook commence comme un composant : `const { currentWave, nextWave } = useGame()`, puis un `useState` et un `useEffect`. Il renvoie `planFor(…)` au lieu de JSX.',
-    'La menace, c’est `currentWave ?? nextWave` (pendant une vague, `nextWave` décrit déjà la suivante). Le boss, lui, se mémorise : `const [bossAlive, setBossAlive] = useState(false)`.',
-    'Pour le boss : dans un `useEffect(…, [])`, abonne-toi à `onGameEvent(\'enemySpawn\', ({ enemy }) => { if (enemy?.kind === \'boss\') { setBossAlive(true); castSpell(\'freeze\'); castSpell(\'meteor\') } })`, fais de même pour `enemyKilled` (→ `false`) et renvoie une fonction qui appelle tous les désabonnements.',
+    'La menace, c’est `currentWave ?? nextWave` (pendant une vague, `nextWave` décrit déjà la suivante). Les boss, eux, se comptent : `const [bossesAlive, setBossesAlive] = useState(0)` (la dernière vague en envoie deux).',
+    'Pour le boss : dans un `useEffect(…, [])`, abonne-toi à `onGameEvent(\'enemySpawn\', ({ enemy }) => { if (enemy?.kind === \'boss\') { setBossesAlive((n) => n + 1); castSpell(\'freeze\'); castSpell(\'meteor\') } })`, fais de même pour `enemyKilled` et `enemyLeaked` (→ `n - 1`), passe `bossesAlive > 0` à `planFor` et renvoie une fonction qui appelle tous les désabonnements.',
   ],
   objectives: [
     {
