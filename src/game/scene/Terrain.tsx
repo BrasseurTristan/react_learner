@@ -1,9 +1,9 @@
-import { Html } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import type { MapDef } from '../../engine/types'
 import { mulberry32, pathCells, toWorld } from './coords'
+import { slotLabel } from './labels'
 
 const GRASS = ['#4f9d55', '#58a85c', '#4a9450', '#5fae60', '#529f57']
 const PATH = ['#d9b77e', '#cfab70', '#e0c08a']
@@ -105,13 +105,23 @@ function Decor({ map }: { map: MapDef }) {
 
 function SlotPad({ map, id, x, z, high, occupied }: { map: MapDef; id: string; x: number; z: number; high?: boolean; occupied: boolean }) {
   const ring = useRef<THREE.Mesh>(null)
+  const label = useRef<THREE.Sprite>(null)
   const [wx, wz] = toWorld(map, x, z)
   const h = high ? 0.42 : 0.14
-  useFrame(({ clock }) => {
-    if (!ring.current) return
-    const mat = ring.current.material as THREE.MeshStandardMaterial
-    mat.emissiveIntensity = occupied ? 0.15 : 1.2 + Math.sin(clock.elapsedTime * 3 + x) * 0.6
-    ring.current.visible = !occupied
+  const tex = useMemo(() => slotLabel(id, occupied, !!high), [id, occupied, high])
+  useFrame(({ clock }, delta) => {
+    if (ring.current) {
+      const mat = ring.current.material as THREE.MeshStandardMaterial
+      mat.emissiveIntensity = occupied ? 0.15 : 1.2 + Math.sin(clock.elapsedTime * 3 + x) * 0.6
+      ring.current.visible = !occupied
+    }
+    if (label.current) {
+      // L'étiquette monte au-dessus de la tour quand le slot est occupé.
+      const targetY = h + (occupied ? 2.05 : 0.95 + Math.sin(clock.elapsedTime * 2 + x * 0.7 + z) * 0.05)
+      label.current.position.y = THREE.MathUtils.lerp(label.current.position.y, targetY, Math.min(1, delta * 6))
+      const s = occupied ? 0.62 : 0.78
+      label.current.scale.set(s * tex.aspect, s, 1)
+    }
   })
   return (
     <group position={[wx, 0, wz]}>
@@ -123,9 +133,9 @@ function SlotPad({ map, id, x, z, high, occupied }: { map: MapDef; id: string; x
         <ringGeometry args={[0.3, 0.38, 32]} />
         <meshStandardMaterial color="#61dafb" emissive="#61dafb" transparent opacity={0.85} />
       </mesh>
-      <Html position={[0, h + 1.35, 0]} center distanceFactor={9} zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
-        <div className={`slot-label${occupied ? ' occupied' : ''}${high ? ' high' : ''}`}>{id}</div>
-      </Html>
+      <sprite ref={label} position={[0, h + 0.95, 0]} renderOrder={20}>
+        <spriteMaterial map={tex.texture} depthTest={false} depthWrite={false} transparent toneMapped={false} />
+      </sprite>
     </group>
   )
 }

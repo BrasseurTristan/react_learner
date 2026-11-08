@@ -576,31 +576,6 @@ code {
   pointer-events: none;
 }
 
-.slot-label {
-  font-family: var(--font-title);
-  font-weight: 700;
-  font-size: 15px;
-  color: #071022;
-  background: var(--accent);
-  border-radius: 8px;
-  padding: 0 7px;
-  box-shadow: 0 0 14px rgba(97, 218, 251, 0.7);
-  user-select: none;
-  white-space: nowrap;
-}
-
-.slot-label.high::after {
-  content: ' ▲';
-  font-size: 10px;
-}
-
-.slot-label.occupied {
-  background: rgba(7, 11, 24, 0.75);
-  color: var(--muted);
-  box-shadow: none;
-  border: 1px solid var(--panel-border);
-}
-
 /* ───────── Résultat ───────── */
 
 .result-overlay {
