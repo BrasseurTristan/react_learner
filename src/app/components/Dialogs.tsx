@@ -101,7 +101,9 @@ export function LevelSelect({
   onPick,
   onClose,
   onResetProgress,
+  onCertificate,
 }: {
+  onCertificate?: () => void
   levels: LevelDefinition[]
   progress: Record<string, LevelProgress>
   currentId: string
@@ -131,9 +133,16 @@ export function LevelSelect({
             </button>
           </>
         ) : (
-          <button className="btn ghost small" onClick={() => setConfirmReset(true)}>
-            Réinitialiser la progression
-          </button>
+          <>
+            <button className="btn ghost small" onClick={() => setConfirmReset(true)}>
+              Réinitialiser la progression
+            </button>
+            {onCertificate && (
+              <button className="btn primary small" onClick={onCertificate}>
+                🎓 Mon certificat
+              </button>
+            )}
+          </>
         )
       }
     >
@@ -176,7 +185,11 @@ export function ResultOverlay({
   onNext,
   onReplay,
   onClose,
+  allDone,
+  onCertificate,
 }: {
+  allDone: boolean
+  onCertificate: () => void
   kind: 'victory' | 'partial' | 'defeat'
   stars: number
   missing: string[]
@@ -192,7 +205,7 @@ export function ResultOverlay({
   }, [kind])
   const colors = ['#61dafb', '#a78bfa', '#f472b6', '#facc15', '#4ade80', '#fb923c']
   return (
-    <div className={`result-overlay ${kind}`} ref={ref}>
+    <div className={`result-overlay ${kind}`} ref={ref} role="dialog" aria-live="assertive">
       {kind === 'victory' &&
         Array.from({ length: 48 }, (_, i) => (
           <span key={i} className="confetti" style={{ background: colors[i % colors.length], left: `${50 + (i % 2 ? 1 : -1) * (i % 7)}%` }} />
@@ -207,19 +220,23 @@ export function ResultOverlay({
                 </span>
               ))}
             </div>
-            <h2>Niveau réussi !</h2>
-            <p>Ta base a tenu et ton code remplit tous les objectifs.</p>
+            <h2>{allDone ? 'Parcours terminé !' : 'Niveau réussi !'}</h2>
+            <p>{allDone ? 'Tu as réussi tous les niveaux. Bravo, défenseur React !' : 'Ta base a tenu et ton code remplit tous les objectifs.'}</p>
             <div className="result-actions">
               <button className="btn ghost" onClick={onReplay}>
                 ↻ Rejouer
               </button>
-              {hasNext ? (
-                <button className="btn primary" onClick={onNext}>
+              {allDone ? (
+                <button className="btn primary" onClick={onCertificate} autoFocus>
+                  🎓 Voir mon certificat
+                </button>
+              ) : hasNext ? (
+                <button className="btn primary" onClick={onNext} autoFocus>
                   Niveau suivant →
                 </button>
               ) : (
-                <button className="btn primary" onClick={onClose}>
-                  🎓 Terminer
+                <button className="btn primary" onClick={onClose} autoFocus>
+                  Continuer
                 </button>
               )}
             </div>

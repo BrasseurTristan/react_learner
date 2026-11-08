@@ -78,7 +78,7 @@ function ShakeGroup({ fx, children }: { fx: FxBus; children: React.ReactNode }) 
   return <group ref={ref}>{children}</group>
 }
 
-function Scene({ engine }: { engine: GameEngine }) {
+function Scene({ engine, introHold }: { engine: GameEngine; introHold: boolean }) {
   const fx = useMemo(() => createFxBus(), [])
   const getState = useThree((s) => s.get)
   // Exposé en dev pour inspecter la scène depuis le navigateur.
@@ -132,7 +132,7 @@ function Scene({ engine }: { engine: GameEngine }) {
         ))}
         <FxLayer engine={engine} fx={fx} />
       </ShakeGroup>
-      <CameraRig map={map} />
+      <CameraRig map={map} hold={introHold} />
       <EffectComposer multisampling={0}>
         <SMAA />
         <Bloom intensity={0.85} luminanceThreshold={0.8} luminanceSmoothing={0.25} mipmapBlur />
@@ -142,7 +142,7 @@ function Scene({ engine }: { engine: GameEngine }) {
   )
 }
 
-export function Board3D({ engine }: { engine: GameEngine }) {
+export function Board3D({ engine, introHold = false }: { engine: GameEngine; introHold?: boolean }) {
   return (
     <Canvas
       shadows={{ type: THREE.PCFShadowMap }}
@@ -154,7 +154,7 @@ export function Board3D({ engine }: { engine: GameEngine }) {
         gl.toneMappingExposure = 1.05
       }}
     >
-      <Scene engine={engine} />
+      <Scene engine={engine} introHold={introHold} />
     </Canvas>
   )
 }

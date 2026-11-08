@@ -13,6 +13,10 @@ export interface LevelProgress {
 
 export interface SaveData {
   currentLevel?: string
+  /** Prénom affiché sur le certificat de fin de parcours. */
+  playerName?: string
+  /** Visite guidée de l'interface déjà vue. */
+  tourSeen?: boolean
   levels: Record<string, LevelProgress>
 }
 

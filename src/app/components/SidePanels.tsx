@@ -50,7 +50,15 @@ export function LogPanel({ engine }: { engine: GameEngine }) {
   })
   return (
     <div className="log" ref={list}>
-      {engine.logs.length === 0 && <div className="log-empty">Le journal du jeu s’affichera ici (et tes console.log aussi).</div>}
+      {engine.logs.length === 0 && (
+        <div className="log-empty">
+          <span className="empty-icon">📜</span>
+          <span className="empty-title">Journal vide pour l’instant</span>
+          <span>
+            Les événements de la partie et tes <code>console.log</code> s’afficheront ici.
+          </span>
+        </div>
+      )}
       {engine.logs.map((l) => (
         <div key={l.id} className={`log-line ${l.level}`}>
           <span className="log-time">{l.time.toFixed(1)}s</span>

@@ -10,6 +10,7 @@ import { buildCheckContext, evaluateObjectives, type ObjectiveResult } from '../
 import { enterStagger } from './anim'
 import { HintsModal, LessonModal, ResultOverlay, SolutionModal, starsFor } from './components/Dialogs'
 import { Hud } from './components/Hud'
+import { LevelIntro, WelcomeTour } from './components/Onboarding'
 import { LogPanel, ObjectivesPanel } from './components/SidePanels'
 import { Markdown } from './Markdown'
 import type { LevelProgress } from './storage'
@@ -21,14 +22,22 @@ interface Props {
   hasNext: boolean
   onNext: () => void
   onOpenLevels: () => void
+  /** Tous les niveaux sont réussis : la victoire propose le certificat. */
+  allDone: boolean
+  onCertificate: () => void
+  tourSeen: boolean
+  onTourSeen: () => void
 }
+
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)
+export const MOD_KEY = isMac ? '⌘' : 'Ctrl'
 
 type Overlay = 'victory' | 'partial' | 'defeat' | null
 type Dialog = 'lesson' | 'hints' | 'solution' | null
 
 const AUTO_RUN_DELAY = 600
 
-export function LevelSession({ level, progress, onProgress, hasNext, onNext }: Props) {
+export function LevelSession({ level, progress, onProgress, hasNext, onNext, allDone, onCertificate, tourSeen, onTourSeen }: Props) {
   const [engine] = useState(() => new GameEngine(level.game))
   const [code, setCode] = useState(progress.code ?? level.starterCode)
   const [compiled, setCompiled] = useState<{ Component: ComponentType | null; runKey: number; error?: string }>({
@@ -46,6 +55,8 @@ export function LevelSession({ level, progress, onProgress, hasNext, onNext }: P
   const [dialog, setDialog] = useState<Dialog>(progress.lessonSeen ? null : 'lesson')
   const [sideTab, setSideTab] = useState<'objectives' | 'log'>('objectives')
   const [leftWidth, setLeftWidth] = useState(44)
+  const [intro, setIntro] = useState<'pending' | 'playing' | 'done'>('pending')
+  const [confirmReset, setConfirmReset] = useState(false)
   const renderCount = useRef(0)
   const missionRef = useRef<HTMLDivElement>(null)
 
@@ -55,6 +66,12 @@ export function LevelSession({ level, progress, onProgress, hasNext, onNext }: P
   useEffect(() => {
     if (missionRef.current) enterStagger(missionRef.current.querySelectorAll('.stagger'), 70)
   }, [])
+
+  // Carton d'intro dès que la leçon est fermée (ou tout de suite si elle a déjà été vue)
+  useEffect(() => {
+    if (dialog === null && intro === 'pending') setIntro('playing')
+  }, [dialog, intro])
+  const endIntro = useCallback(() => setIntro('done'), [])
 
   // ── Compilation / exécution du code ──
   const run = useCallback(
@@ -207,23 +224,35 @@ export function LevelSession({ level, progress, onProgress, hasNext, onNext }: P
           </div>
         </div>
 
-        <div className="editor card">
+        <div className="editor card" data-tour="editor">
           <div className="editor-tabs">
             <span className="file-tab">
               <span className="dot" /> Defense.tsx
             </span>
             <div className="editor-tools">
-              <button
-                className="btn ghost small"
-                onClick={() => {
-                  if (window.confirm('Revenir au code de départ ? Ton code actuel sera perdu.')) setCode(level.starterCode)
-                }}
-                title="Revenir au code de départ"
-              >
-                ⟲ Réinitialiser
-              </button>
-              <button className="btn primary small" onClick={() => run(code)} title="Ctrl/⌘ + S">
-                ▶ Exécuter
+              {confirmReset ? (
+                <div className="inline-confirm" role="group" aria-label="Confirmer la réinitialisation">
+                  <span>Effacer ton code ?</span>
+                  <button className="btn ghost small" onClick={() => setConfirmReset(false)} autoFocus>
+                    Annuler
+                  </button>
+                  <button
+                    className="btn danger small"
+                    onClick={() => {
+                      setCode(level.starterCode)
+                      setConfirmReset(false)
+                    }}
+                  >
+                    Oui, revenir au départ
+                  </button>
+                </div>
+              ) : (
+                <button className="btn ghost small" onClick={() => setConfirmReset(true)} title="Revenir au code de départ">
+                  ⟲ Réinitialiser
+                </button>
+              )}
+              <button className="btn primary small" onClick={() => run(code)} title={`Exécuter (${MOD_KEY} + S)`}>
+                ▶ Exécuter <kbd>{MOD_KEY} S</kbd>
               </button>
             </div>
           </div>
@@ -247,7 +276,9 @@ export function LevelSession({ level, progress, onProgress, hasNext, onNext }: P
                 </ul>
               </details>
             ) : (
-              <span>✓ Ton code compile. Il est exécuté automatiquement à chaque modification.</span>
+              <span>
+                ✓ Ton code compile et s’exécute automatiquement. <span className="muted">Raccourci :</span> <kbd>{MOD_KEY} S</kbd>
+              </span>
             )}
           </div>
         </div>
@@ -257,8 +288,8 @@ export function LevelSession({ level, progress, onProgress, hasNext, onNext }: P
 
       {/* ───────── Colonne droite : jeu ───────── */}
       <section className="right">
-        <div className="board card">
-          <Board3D engine={engine} />
+        <div className="board card" data-tour="board">
+          <Board3D engine={engine} introHold={intro === 'pending'} />
           <Hud
             engine={engine}
             speed={speed}
@@ -271,8 +302,11 @@ export function LevelSession({ level, progress, onProgress, hasNext, onNext }: P
             onStart={start}
             onRestart={restart}
           />
+          {intro === 'playing' && <LevelIntro level={level} onDone={endIntro} />}
           {overlay && (
             <ResultOverlay
+              allDone={allDone}
+              onCertificate={onCertificate}
               kind={overlay}
               stars={stars}
               missing={missing}
@@ -285,7 +319,7 @@ export function LevelSession({ level, progress, onProgress, hasNext, onNext }: P
         </div>
 
         <div className="bottom">
-          <div className="user-panel card">
+          <div className="user-panel card" data-tour="user">
             <div className="panel-title">
               <span>🎛️ Ton composant</span>
               <small>ce que renvoie ton JSX (hors tours)</small>
@@ -294,7 +328,7 @@ export function LevelSession({ level, progress, onProgress, hasNext, onNext }: P
               <UserRuntime Component={compiled.Component} runKey={compiled.runKey} onError={onUserError} onRender={onUserRender} />
             </div>
           </div>
-          <div className="side card">
+          <div className="side card" data-tour="objectives">
             <div className="tabs" role="tablist">
               <button className={sideTab === 'objectives' ? 'active' : ''} onClick={() => setSideTab('objectives')}>
                 🎯 Objectifs
@@ -310,6 +344,7 @@ export function LevelSession({ level, progress, onProgress, hasNext, onNext }: P
         </div>
       </section>
 
+      {intro === 'done' && !tourSeen && dialog === null && <WelcomeTour onClose={onTourSeen} />}
       {dialog === 'lesson' && (
         <LessonModal
           level={level}

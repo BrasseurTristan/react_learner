@@ -2,7 +2,8 @@ import { animate, stagger } from 'animejs'
 
 /** Petites animations d'interface basées sur anime.js (respectent prefers-reduced-motion). */
 
-const reduced = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+export const prefersReducedMotion = () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+const reduced = prefersReducedMotion
 
 export function enterStagger(targets: Element[] | NodeListOf<Element> | string, delay = 60) {
   if (reduced()) return
@@ -37,7 +38,7 @@ export function bannerIn(target: Element | null) {
 }
 
 export function celebrate(container: HTMLElement | null) {
-  if (!container) return
+  if (!container || reduced()) return
   const pieces = container.querySelectorAll('.confetti')
   animate(container.querySelectorAll('.star'), {
     scale: { from: 0, to: 1 },

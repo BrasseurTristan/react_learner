@@ -58,7 +58,14 @@ interface Props {
  * (frappe dans l'éditeur, objectifs…). Indispensable pour que `renderCount` reflète son code.
  */
 export const UserRuntime = memo(function UserRuntime({ Component: UserComponent, runKey, onError, onRender }: Props) {
-  if (!UserComponent) return <div className="user-empty">Ton composant apparaîtra ici dès que ton code compile.</div>
+  if (!UserComponent)
+    return (
+      <div className="user-empty">
+        <span className="empty-icon">⏳</span>
+        <span className="empty-title">En attente de ton code</span>
+        <span>Ton composant apparaîtra ici dès que ton code compile.</span>
+      </div>
+    )
   return (
     <UserErrorBoundary key={runKey} onError={onError}>
       <Profiler id="user" onRender={onRender}>

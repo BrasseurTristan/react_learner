@@ -52,7 +52,7 @@ function fitDistance(map: MapDef, aspect: number, fov: number, dir: THREE.Vector
  * Caméra orbitale qui cadre automatiquement le plateau selon la taille du panneau,
  * avec un survol d'introduction au chargement du niveau.
  */
-export function CameraRig({ map }: { map: MapDef }) {
+export function CameraRig({ map, hold = false }: { map: MapDef; hold?: boolean }) {
   const { camera, size } = useThree()
   const controls = useRef<OrbitControlsImpl>(null)
   const target = useMemo(() => new THREE.Vector3(0, -0.1, 0.15), [])
@@ -93,7 +93,8 @@ export function CameraRig({ map }: { map: MapDef }) {
     const ctrl = controls.current
     const it = intro.current
     if (it.t >= INTRO_DURATION) return
-    it.t = Math.min(INTRO_DURATION, it.t + Math.min(delta, 0.2))
+    // Tant que la leçon est ouverte, la caméra attend en position de départ.
+    if (!hold) it.t = Math.min(INTRO_DURATION, it.t + Math.min(delta, 0.2))
     const k = it.t / INTRO_DURATION
     const e = 1 - Math.pow(1 - k, 3)
     const polar = THREE.MathUtils.lerp(0.32, POLAR, e)
